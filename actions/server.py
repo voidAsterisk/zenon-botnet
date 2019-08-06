@@ -11,8 +11,9 @@ class Server(object):
 		
 	def get_channels(self, serverid):
 		return self.session.get(self.discord + "/guilds/"+serverid+"/channels", headers={"Authorization":self.token})
-	def join_server(self, invite, proxy):
-		return self.session.post(self.discord + "invite/" + invite, proxies=proxy, headers={"Authorization":self.token})
+		
+	def join_server(self, invite):
+		return self.session.post(self.discord + "invite/" + invite, headers={"Authorization":self.token})
 		
 	def leave_server(self, serverid, proxy):
 		return self.session.delete(self.discord + "users/@me/guilds/" + str(serverid), proxies=proxy, headers={"Authorization":self.token}).text

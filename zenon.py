@@ -14,6 +14,7 @@ class Client(object):
 		self.token = token
 		self.discord = discord
 		self.preproxy = proxy
+		self.online = True
 		if self.preproxy is not None:
 			self.proxy = {"http":"http://"+self.preproxy, "https":"https://"+self.preproxy, "ftp":"ftp://"+self.preproxy}
 		else:
@@ -24,9 +25,9 @@ class Client(object):
 		sends a message to a specific channel or
 		a person
 		"""
-		return Messages(self.token).send_message(chatid, content, self.proxy)
+		return Messages(self.token).send_message(chatid, content)
 		if tts:
-			return Messages(self.token).send_message_with_tts(chatid, content, self.proxy)
+			return Messages(self.token).send_message_with_tts(chatid, content)
 		
 	def typing_action(self, chatid):
 		"""
@@ -82,7 +83,7 @@ class Client(object):
 		it joins the server from the specific invite parameter that the
 		user has entered
 		"""
-		return Server(self.token).join_server(invite, self.proxy)
+		return Server(self.token).join_server(invite)
 		
 	def get_channels(self, serverid):
 		return Server(self.token).get_channels(serverid)
@@ -128,18 +129,30 @@ class Client(object):
 		"""
 		it sends a friend request to the user mentioned
 		"""
-		return self.session.post(self.discord + "users/@me/relationships", headers={"Authorization":self.token, "Content-Type":"application/json"}, proxies=self.proxy, data={"username":username, "discriminator":discriminator}).text
+		return self.session.post(self.discord + "users/@me/relationships", headers={"Authorization":self.token, "Content-Type":"application/json"}, data={"username":username, "discriminator":discriminator}).text
 ### CUSTOM GOES HERE
 
 	def getGuilds(self):
 		return self.session.get(self.discord + "/users/@me/guilds", headers={"Authorization":self.token}).text
 	def getGuildMembers(self, guild_id, proxy):
 		return self.session.get(self.discord + "/guilds/"+guild_id+"/members?limit=1000", proxies=proxy, headers={"Authorization":self.token}).text
-	def getUser(self, user_id, proxy):
-		return self.session.get(self.discord + "/users/" + user_id, proxies=proxy, headers={"Authorization":self.token}).text
+	def getUser(self, user_id):
+		return self.session.get(self.discord + "/users/" + user_id, headers={"Authorization":self.token}).text
 		
+	def changeUsername(self, username):
+		return self.session.post(self.discord + "/users/@me/", headers={"Authorization":self.token}, data={"username":username}).text
 	
-	
+	def join_server_safe(self, invite, serverid):
+		# Test if in server
+		gjson = self.getGuilds()
+		if serverid in str(gjson):
+			return "Already a member of " + invite
+		return self.join_server(invite)
+	def in_server(self, serverid):
+		gjson = self.getGuilds()
+		if serverid in str(gjson):
+			return True
+		return False
 ### CUSTOM ENDS HERE
 	def func_loop(self, func):
 		self.thread = threading.Thread(target=func)
